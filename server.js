@@ -10,7 +10,7 @@ app.user(express.json());
 
 app.user(express.static("public"));
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/workout-tracker', {
     useNewUrlParser: true,
     useFindAndModify: true,
 })
