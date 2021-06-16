@@ -1,11 +1,6 @@
 const router = require('express').Router();
 const Workout = require('../../models/workout.js');
 
-// To Do 
-// post route to add excersises to previous workout plan
-// post route to add excersises to new workout plan
-// get route to view combined weight for last seven workouts on stats page.
-// get route to view combined duration for last seven workouts on stats page.
 
 router.post("/workouts", async ({ body }, res) => {
     try {
@@ -21,7 +16,11 @@ router.post("/workouts", async ({ body }, res) => {
 
 router.get('/workouts', async ({ body }, res) => {
     try {
-        let allWorkouts = await Workout.find({}).sort({ date: -1 });
+        let allWorkouts = await Workout.aggregate([
+            {
+                $addFields: { totalDuration: { $sum: '$exercises.duration' } }
+            }
+        ]);
 
         if (!allWorkouts) {
             res.status(500).json({ message: 'No workouts are in the database' })
@@ -50,15 +49,15 @@ router.put('/workouts/:id', async ({ body, params }, res) => {
 
 router.get('/workouts/range', async (req, res) => {
     try {
-        const lastSevenWorkouts = await Workout.find({ day: { $lte: new Date(Date.now()).toISOString() } }).
-            sort({ day: -1 });
-
+        const lastSevenWorkouts = await Workout.aggregate([
+            { 
+                $addFields: { totalDuration: {$sum: '$exercises.duration'}}
+            }
+        ]).sort({ date: -1}).limit(7)
         if (!lastSevenWorkouts) {
             res.status(400).json({ message: 'Your database does not have any workouts' });
         }
-
         res.status(200).json(lastSevenWorkouts);
-
     } catch (error) {
         res.status(500).json(error)
     }
